@@ -17,29 +17,47 @@ def get_all_contacts():
     print("------------------------------------------------")
     for student in mycursor:
         print(student[1] + " " + student[2] +
-              "\t" + student[3] + "\t\t" + student[4])
-        print()
+              "\t" + student[3] + "\t\t" + student[4] + "\n")
 
 
 def insert_contact(first_name, last_name, mob_number, location="-"):
-    if mob_number[5] != " ":
-        mob_number = mob_number[:5] + " " + mob_number[5:]
+    mob_number = "+91 " + mob_number[:5] + " " + mob_number[5:]
     if first_name and last_name and mob_number:
         mycursor.execute(
-            "INSERT INTO `all_contacts` (`id`, `first_name`, `last_name`, `phone_no`, `city`) VALUES (NULL, %s, %s, %s, %s)", (first_name, last_name, "+91 " + mob_number, location))
+            "INSERT INTO `all_contacts` (`id`, `first_name`, `last_name`, `phone_no`, `city`) VALUES (NULL, %s, %s, %s, %s)", (first_name, last_name, mob_number, location))
         db.commit()
 
 
 def get_specific_contact(query):
     mycursor.execute("SELECT * FROM `all_contacts` WHERE %s IN (`first_name`,`last_name`,`phone_no`)",
                      (query,))
-    res = mycursor.fetchall()
     print("Full name\tMobile number\t\tLocation")
     print("------------------------------------------------")
-    for row in res:
+    for row in mycursor:
         print(row[1] + " " + row[2] +
-              "\t" + row[3] + "\t\t" + row[4])
-        print()
+              "\t" + row[3] + "\t\t" + row[4] + "\n")
+
+
+def edit_contact_name(number):
+    number = "+91 " + number[:5] + " " + number[5:]
+    first_name = input("Enter the first name to update: ").strip().title()
+    last_name = input("Enter the last name to update: ").strip().title()
+    mycursor.execute("UPDATE `all_contacts` SET `first_name` = %s, `last_name` = %s WHERE `all_contacts`.`phone_no` = %s",
+                     (first_name, last_name, number))
+    if 'y' == input("Are you sure you want to update? Y/n: ").lower():
+        db.commit()
+
+
+def edit_contact_number(name):
+    f_name, l_name = name.split(" ")
+    f_name = f_name.title()
+    l_name = l_name.title()
+    pno = input("Enter the phone number to update: ").strip()
+    pno = "+91 " + pno[:5] + " " + pno[5:]
+    mycursor.execute(
+        "UPDATE `all_contacts` SET `phone_no` = %s WHERE `first_name` = %s AND `last_name` = %s", (pno, f_name, l_name))
+    if 'y' == input("Are you sure you want to update? Y/n: ").lower():
+        db.commit()
 
 
 def delete_contact(query):
@@ -70,8 +88,14 @@ while True:
             "Enter first name, last name or mobile number to search: ").strip()
         delete_contact(del_query)
     elif choice == 5:
-        pass
-        break
+        update_choice = int(
+            input("You wish to update name or number? Enter 1 for name 2 for number: "))
+        if update_choice == 1:
+            number = input("Enter the number: ")
+            edit_contact_name(number)
+        elif update_choice == 2:
+            name = input("Enter the name: ")
+            edit_contact_number(name)
     elif choice == 6:
         print("Thank you for using the application!")
         break
